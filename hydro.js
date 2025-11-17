@@ -16276,36 +16276,39 @@ case 'tt': {
 break;
 //==============================================
 case 'instagram': case 'igdl': case 'ig': case 'igvideo': case 'igimage': case 'igvid': case 'igimg': {
-    if (!text) return replyhydro(`Anda perlu memberikan URL video, postingan, reel, gambar Instagram apa pun`);
-    hydro.sendMessage(m.chat, { react: { text: `⏱️`, key: m.key }});
+    if (!text) return replyhydro(`Anda perlu memberikan URL postingan, reel, atau video Instagram!`);
+    await hydro.sendMessage(m.chat, { react: { text: "⏱️", key: m.key } });
     try {
-        const data = await fetchJson(`https://api.ootaizumi.web.id/downloader/instagram?url=${encodeURIComponent(text)}`);
-        
-        console.log("Response API:", data); // Log data untuk debugging
-        
-        if (data && data.status && data.result) {
-            const mediaUrl = data.result.media;
-            const isVideo = data.result.isVideo;
-            const cap = `Ini dia kak🔥\n🎬 Judul: ${data.result.metadata.title}\n👤 Author: ${data.result.metadata.author}\n❤️ Likes: ${data.result.metadata.like}  💬 Comments: ${data.result.metadata.comment}`;
-            
-            if (isVideo) {
-                await hydro.sendMessage(m.chat, { 
-                    video: { url: mediaUrl }, 
-                    caption: cap 
-                }, { quoted: m });
-            } else {
-                await hydro.sendMessage(m.chat, { 
-                    image: { url: mediaUrl }, 
-                    caption: cap 
-                }, { quoted: m });
-            }
-        } else {
-            console.log('Tidak ada media yang ditemukan di API response');
-            await hydro.sendMessage(m.chat, { text: 'Maaf, media tidak ditemukan atau format URL salah.' }, { quoted: m });
+        const api = `https://api.nekolabs.web.id/downloader/instagram?url=${encodeURIComponent(text)}`;
+        const res = await fetchJson(api);
+
+        if (!res.success || !res.result) {
+            return m.reply("❌ Gagal mengambil data dari Instagram!");
         }
-    } catch (error) {
-        console.error('Gagal fetch media IG:', error);
-        await hydro.sendMessage(m.chat, { text: 'Terjadi kesalahan saat mengambil media.' }, { quoted: m });
+        const meta = res.result.metadata;
+        const downloadUrl = res.result.downloadUrl[0]; // ambil URL pertama
+        const isVideo = meta.isVideo;
+
+        const caption = `📥 *Instagram Downloader*\n` +
+                        `👤 Username: ${meta.username}\n` +
+                        `💬 Caption: ${meta.caption || "-"}\n` +
+                        `❤️ Likes: ${meta.like}  💬 Comments: ${meta.comment}\n` +
+                        `🎬 Type: ${isVideo ? "Video" : "Foto"}`;
+        if (isVideo) {
+            await hydro.sendMessage(m.chat, {
+                video: { url: downloadUrl },
+                caption: caption
+            }, { quoted: m });
+        } else {
+            await hydro.sendMessage(m.chat, {
+                image: { url: downloadUrl },
+                caption: caption
+            }, { quoted: m });
+        }
+        await hydro.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
+    } catch (e) {
+        console.error("Gagal fetch media IG:", e);
+        m.reply("❌ Terjadi kesalahan saat mengambil media Instagram.");
     }
 }
 break;
@@ -40267,3 +40270,4 @@ function autoClearSession() {
 }
 
 autoClearSession();
+
